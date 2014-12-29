@@ -1,0 +1,55 @@
+<link rel="import" href="../bower_components/core-scaffold/core-scaffold.html">
+<link rel="import" href="../bower_components/core-toolbar/core-toolbar.html">
+<link rel="import" href="../bower_components/core-menu/core-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/core-icon/core-icon.html">
+<link rel="import" href="../bower_components/core-icon-button/core-icon-button.html">
+<link rel="import" href="../bower_components/core-animated-pages/core-animated-pages.html">
+<link rel="import" href="../bower_components/core-animated-pages/transitions/slide-from-right.html">
+<link rel="import" href="../bower_components/core-a11y-keys/core-a11y-keys.html">
+
+<polymer-element name='mix-hide' attributes='route pages'>
+  <template>
+    <core-scaffold id="scaffold" selected='{{route}}' valueattr='route'>
+
+    <nav>
+      <core-toolbar>
+        <span>MixHide</span>
+      </core-toolbar>
+      
+      <core-menu>
+        <template repeat='{{page in pages}}'>
+          <paper-item noink>
+            <core-icon icon="label-outline"></core-icon>
+            <a href="#{{page.route}}">{{page.shortTitle}}</a>
+          </paper-item>
+        </template>
+      </core-menu>
+    </nav>
+
+    <core-toolbar tool flex route='{{page.route}}'>
+      <div flex>{{page.title}}</div>
+      <core-icon-button icon="refresh"></core-icon-button>
+      <core-icon-button icon="add"></core-icon-button>
+    </core-toolbar>
+
+    <div layout horizontal center-center fit>
+      <core-animated-pages transitions="slide-from-right">
+      <template repeat='{{page in pages}}'>
+        <section route='{{page.route}}' layout vertical center-center>
+          <div>{{page.shortTitle}}</div>
+        </section>
+      </template>
+    </core-animated-pages>
+    </div>
+
+    </core-scaffold>
+  </template>
+  <script>
+  Polymer('mix-hide', {
+    navigate: function(event){
+      this.route = event.currentTarget.getAttribute('link');
+    }
+  })
+  </script>
+</polymer-element>

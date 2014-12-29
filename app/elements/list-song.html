@@ -1,0 +1,8 @@
+<core-list data="{{data}}" selectionEnabled='{{selectionEnabled}}'>
+  <template>
+    <div class="row {{ {selected: selected} | tokenList }}">
+      List row: {{index}}, User data from model: {{model.name}}
+      
+    </div>
+  </template>
+</core-list>

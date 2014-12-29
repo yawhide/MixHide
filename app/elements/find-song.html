@@ -1,0 +1,57 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel='import' href='../bower_components/paper-input/paper-input.html'>
+<link rel="import" href="../bower_components/core-ajax/core-ajax.html">
+<link rel='import' href='../bower_components/paper-button/paper-button.html'>
+
+<polymer-element name="find-song">
+  <template>
+    <link rel='stylesheet' href='../styles/find-song.css'>
+    <h4>Find a Song</h4>
+    <paper-input type='text' label='Enter a Song Name' floatingLabel placeholder='song name' value='{{songName}}' on-keypress="{{keypressHandler}}"></paper-input>
+    <paper-button raised role='button' class='hover' on-click='{{searchSong}}'>Find</paper-button>
+    <textarea value="{{SoundCloudResp}}"></textarea>
+    <textarea value='{{YouTubeResp}}'></textarea>
+    <textarea value='{{SpotifyResp}}'></textarea>
+  </template>
+  <script>
+    (function () {
+      Polymer({
+        domReady: function (){
+        },
+        keypressHandler: function(event, detail, sender) { 
+          if(event.which === 13){
+            this.searchSong();
+          }
+        },
+        searchSong: function (){
+          var that = this;
+          // SoundCloud
+          SC.get('/tracks', { q: this.songName}, function (tracks){
+            console.log(tracks);
+            that.SoundCloudResp = JSON.stringify(tracks);
+          })
+          //Youtube
+          var request = gapi.client.youtube.search.list({
+            q: this.songName,
+            part: 'snippet'
+          })
+          request.execute(function (tracks){
+            var str = JSON.stringify(tracks.result);
+            that.YouTubeResp = str;
+          })
+          //Spotify
+          spotifyApi.searchTracks(this.songName
+            , function (err, tracks){
+            if(err)
+              console.error(err);
+            else{
+              console.log(tracks);
+              that.SpotifyResp = JSON.stringify(tracks);
+            }
+          })
+          this.songName = '';
+        }
+      })
+    })();
+  </script>
+</polymer-element>

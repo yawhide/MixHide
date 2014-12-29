@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>mixhide</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+
+  <!-- build:css styles/main.css -->
+  <link rel="stylesheet" href="styles/main.css">
+  <!-- endbuild-->
+
+  <!-- build:js bower_components/webcomponentsjs/webcomponents.min.js -->
+  <script src="bower_components/webcomponentsjs/webcomponents.js"></script>
+  <script src='bower_components/spotify-web-api-js/src/spotify-web-api.js'></script>
+  <!-- endbuild -->
+
+  <!-- build:vulcanized elements/elements.vulcanized.html -->
+  <link rel='import' href='elements/find-song.html'>
+  
+  <link rel="import" href="bower_components/core-scaffold/core-scaffold.html">
+  <link rel="import" href="bower_components/core-toolbar/core-toolbar.html">
+  <link rel="import" href="bower_components/core-menu/core-menu.html">
+  <link rel="import" href="bower_components/paper-item/paper-item.html">
+  <link rel="import" href="bower_components/core-icon/core-icon.html">
+  <link rel="import" href="bower_components/core-icon-button/core-icon-button.html">
+  <link rel="import" href="bower_components/core-animated-pages/core-animated-pages.html">
+  <link rel="import" href="bower_components/core-animated-pages/transitions/slide-from-right.html">
+  <link rel="import" href="bower_components/flatiron-director/flatiron-director.html">
+  <link rel="import" href="bower_components/core-a11y-keys/core-a11y-keys.html">
+  <!-- endbuild-->
+</head>
+
+<body unresolved fullbleed>
+
+<template is="auto-binding" id="t">
+
+  <!-- Route controller. -->
+  <flatiron-director route="{{route}}" autoHash></flatiron-director>
+
+  <!-- Keyboard nav controller. -->
+  <core-a11y-keys id="keys" target="{{parentElement}}" keys="up down left right space space+shift" on-keys-pressed="{{keyHandler}}"></core-a11y-keys>
+
+  <!-- Dynamic content controller -->
+  <core-ajax id="ajax" url="{{selectedPage.page.url}}" handleAs="document" on-core-response="{{onResponse}}"></core-ajax>
+
+  <core-scaffold id="scaffold">
+
+    <nav>
+      <core-toolbar>
+        <span>MixHide</span>
+      </core-toolbar>
+      <core-menu id="menu" valueattr="hash" selected="{{route}}" selectedModel="{{selectedPage}}" on-core-select="{{menuItemSelected}}" on-click="{{ajaxLoad}}">
+        <template repeat="{{page, i in pages}}">
+          <paper-item hash="{{page.hash}}" noink>
+            <core-icon icon="label{{route != page.hash ? '-outline' : ''}}"></core-icon>
+            <a href="{{page.url}}">{{page.name}}</a>
+          </paper-item>
+        </template>
+      </core-menu>
+    </nav>
+
+    <core-toolbar tool flex>
+      <div flex>{{selectedPage.page.title}}</div>
+      <core-icon-button icon="refresh"></core-icon-button>
+      <core-icon-button icon="add"></core-icon-button>
+    </core-toolbar>
+
+    <div layout horizontal center-center fit>
+      <core-animated-pages id="pages" selected="{{route}}" valueattr="hash" transitions="slide-from-right">
+        <template repeat="{{page, i in pages}}">
+          <section hash="{{page.hash}}" layout vertical center-center>
+            <{{page.polymer}}></{{page.polymer}}>
+          </section>
+        </template>
+      </core-animated-pages>
+    </div>
+
+  </core-scaffold>
+
+</template>
+  <script src="scripts/app.js"></script>
+  <!-- <find-song></find-song> -->
+  
+  <!-- build:js scripts/app.js -->
+  <script src='scripts/soundcloud.js'></script>
+  
+
+  <!-- endbuild-->
+  <script src="http://connect.soundcloud.com/sdk.js"></script>
+  <script>
+// initialize client with app credentials
+SC.initialize({
+  client_id: '87bb4b983f12f596acf1d9e5cbc4d206',
+  redirect_uri: 'http://localhost.mixhide.com:9000/callback.html'
+});
+  </script>
+  <script>
+  function init(){
+    gapi.client.setApiKey('AIzaSyCtZKmbq2PW8XjA9Klbd21ERziMVEf1BRg');
+    gapi.client.load('youtube', 'v3');
+    console.log('google api initialized');
+  }
+  </script>
+  <script src="https://apis.google.com/js/client.js?onload=init"></script>
+</body>
+
+</html>
