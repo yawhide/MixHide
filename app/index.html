@@ -20,7 +20,7 @@
 
   <!-- build:vulcanized elements/elements.vulcanized.html -->
   <link rel='import' href='elements/find-song.html'>
-  
+
   <link rel="import" href="bower_components/core-scaffold/core-scaffold.html">
   <link rel="import" href="bower_components/core-toolbar/core-toolbar.html">
   <link rel="import" href="bower_components/core-menu/core-menu.html">
@@ -31,54 +31,59 @@
   <link rel="import" href="bower_components/core-animated-pages/transitions/slide-from-right.html">
   <link rel="import" href="bower_components/flatiron-director/flatiron-director.html">
   <link rel="import" href="bower_components/core-a11y-keys/core-a11y-keys.html">
+  <link rel="import" href="bower_components/core-pages/core-pages.html">
+  <link rel="import" href="bower_components/core-header-panel/core-header-panel.html">
+  <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="bower_components/paper-shadow/paper-shadow.html">
+  <link rel="import" href="bower_components/core-item/core-item.html">
+  <link rel='import' href='bower_components/paper-shadow/paper-shadow.css'>
   <!-- endbuild-->
 </head>
 
 <body unresolved fullbleed>
 
-<template is="auto-binding" id="t">
+<template is="auto-binding" id='t'>
 
-  <!-- Route controller. -->
-  <flatiron-director route="{{route}}" autoHash></flatiron-director>
+  <flatiron-director route="{{route}}" autoHash on-director-route="{{routeChanged}}"></flatiron-director>
 
-  <!-- Keyboard nav controller. -->
-  <core-a11y-keys id="keys" target="{{parentElement}}" keys="up down left right space space+shift" on-keys-pressed="{{keyHandler}}"></core-a11y-keys>
-
-  <!-- Dynamic content controller -->
-  <core-ajax id="ajax" url="{{selectedPage.page.url}}" handleAs="document" on-core-response="{{onResponse}}"></core-ajax>
-
-  <core-scaffold id="scaffold">
-
-    <nav>
-      <core-toolbar>
-        <span>MixHide</span>
-      </core-toolbar>
-      <core-menu id="menu" valueattr="hash" selected="{{route}}" selectedModel="{{selectedPage}}" on-core-select="{{menuItemSelected}}" on-click="{{ajaxLoad}}">
+  <core-scaffold fit id="scaffold">
+  
+    <core-header-panel navigation mode="seamed" flex>
+      
+      <core-toolbar>MixHide</core-toolbar>
+      
+      <core-menu selectedModel="{{selectedPage}}" on-core-select="{{menuItemSelected}}">
         <template repeat="{{page, i in pages}}">
-          <paper-item hash="{{page.hash}}" noink>
-            <core-icon icon="label{{route != page.hash ? '-outline' : ''}}"></core-icon>
-            <a href="{{page.url}}">{{page.name}}</a>
-          </paper-item>
+          <core-item icon="label-outline" label="{{page.name}}" active?="{{route == page.hash}}" class="{{ {'core-selected' : route == page.hash} | tokenList }}">
+            <a href="#{{page.hash}}"></a>
+          </core-item>
         </template>
       </core-menu>
-    </nav>
+    </core-header-panel>
 
     <core-toolbar tool flex>
       <div flex>{{selectedPage.page.title}}</div>
-      <core-icon-button icon="refresh"></core-icon-button>
-      <core-icon-button icon="add"></core-icon-button>
+      <paper-icon-button icon="refresh"></paper-icon-button>
+      <paper-icon-button icon="add"></paper-icon-button>
     </core-toolbar>
 
     <div layout horizontal center-center fit>
       <core-animated-pages id="pages" selected="{{route}}" valueattr="hash" transitions="slide-from-right">
-        <template repeat="{{page, i in pages}}">
-          <section hash="{{page.hash}}" layout vertical center-center>
-            <{{page.polymer}}></{{page.polymer}}>
-          </section>
-        </template>
+        <div hash='create'>
+        {{page.name}}
+          <create-mix></create-mix>
+        </div> 
+        <div hash='add'>
+          {{page.name}}
+          <find-song></find-song>
+        </div>
+        <div hash='view'>
+          {{page.name}}
+          <list-song></list-song>
+        </div>
       </core-animated-pages>
     </div>
-
+  
   </core-scaffold>
 
 </template>

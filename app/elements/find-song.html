@@ -2,6 +2,7 @@
 <link rel='import' href='../bower_components/paper-input/paper-input.html'>
 <link rel="import" href="../bower_components/core-ajax/core-ajax.html">
 <link rel='import' href='../bower_components/paper-button/paper-button.html'>
+<link rel='import' href='../bower_components/core-list/core-list.html'>
 
 <polymer-element name="find-song">
   <template>
@@ -9,13 +10,22 @@
     <h4>Find a Song</h4>
     <paper-input type='text' label='Enter a Song Name' floatingLabel placeholder='song name' value='{{songName}}' on-keypress="{{keypressHandler}}"></paper-input>
     <paper-button raised role='button' class='hover' on-click='{{searchSong}}'>Find</paper-button>
-    <textarea value="{{SoundCloudResp}}"></textarea>
-    <textarea value='{{YouTubeResp}}'></textarea>
-    <textarea value='{{SpotifyResp}}'></textarea>
+    <core-list data='{{soundCloudSongs}}' height="80" flex style='overflow-y: auto;'>
+      <template>
+        <div divider class="divider">{{model.title}}</div>
+        <div class="item">{{model.username}}</div>
+      </template>
+    </core-list>
+    <core-list data='{{youtubeSongs}}'>
+    </core-list>
+    <core-list data='{{spotifySongs}}'>
+    </core-list>
+
   </template>
   <script>
     (function () {
-      Polymer({
+      Polymer('find-song', {
+        soundCloudSongs: [{title:'hi', username:'bue'}],
         domReady: function (){
         },
         keypressHandler: function(event, detail, sender) { 
@@ -27,15 +37,37 @@
           var that = this;
           // SoundCloud
           SC.get('/tracks', { q: this.songName}, function (tracks){
+            console.info('soundcloud');
             console.log(tracks);
             that.SoundCloudResp = JSON.stringify(tracks);
+            //that.soundCloudSongs = [];
+            for (var i = tracks.length - 1; i >= 0; i--) {
+              var ob = {
+                artwork_url: tracks[i].artwork_url,
+                duration: tracks[i].duration,
+                id: tracks[i].id,
+                genre: tracks[i].genre,
+                permalink_url: tracks[i].permalink_url,
+                sharing: tracks[i].sharing,
+                stream_url: tracks[i].streamable? tracks[i].stream_url : null,
+                title: tracks[i].title,
+                uri: tracks[i].uri,
+                waveform_url: tracks[i].waveform_url,
+                username: tracks[i].user.username
+              };
+              that.soundCloudSongs.push(ob);
+            };
+            console.log(that.soundCloudSongs);
           })
+
           //Youtube
           var request = gapi.client.youtube.search.list({
             q: this.songName,
             part: 'snippet'
           })
           request.execute(function (tracks){
+            console.info('youtube')
+            console.log(tracks);
             var str = JSON.stringify(tracks.result);
             that.YouTubeResp = str;
           })
@@ -45,6 +77,7 @@
             if(err)
               console.error(err);
             else{
+              console.info('spotify');
               console.log(tracks);
               that.SpotifyResp = JSON.stringify(tracks);
             }

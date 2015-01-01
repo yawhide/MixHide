@@ -4,6 +4,7 @@
 /* styles for the custom element itself - lowest specificity */
 :host {
   display: block;
+  font-size: 16px;
 }
 
 paper-button{
@@ -12,4 +13,8 @@ paper-button{
   &.hover:hover {
     background: #eee;
   }
+}
+
+template{
+  font-size:10px;
 }
