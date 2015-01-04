@@ -1,6 +1,6 @@
 {
-  "name": "mixhide",
-  "version": "0.0.0",
+  "name": "MixHide",
+  "version": "0.0.1",
   "dependencies": {
     "node-sass": "^1.2.3"
   },

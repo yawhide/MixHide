@@ -18,3 +18,65 @@ paper-button{
 template{
   font-size:10px;
 }
+
+songResultsContainer{
+  overflow-y: auto;
+  position: relative;
+}
+
+core-list{
+  height: 500px;
+}
+
+.item {
+  box-sizing: border-box;
+  height: 80px;
+  border-bottom: 1px solid #ddd;
+  padding: 4px;
+  cursor: default;
+  background-color: white;
+  overflow: hidden;
+}
+
+.selected {
+  background: silver;
+}
+
+.message {
+  padding-left: 77px;
+  background-repeat: no-repeat;
+  background-position: 10px 10px;
+  background-size: 60px;
+}
+
+.songTitle {
+  display: inline;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  -o-text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timestamp {
+  margin-left: 10px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.body {
+  font-size: 12px;
+}
+
+.spaced {
+  margin: 10px;
+}
+
+.selection-display {
+  background: lightgray;
+  padding: 0 5px;
+  margin: 0 5px;
+}
+
+.narrow {
+  width: 40px;
+}

@@ -44,41 +44,52 @@
 
 <template is="auto-binding" id='t'>
 
-  <flatiron-director route="{{route}}" autoHash on-director-route="{{routeChanged}}"></flatiron-director>
+  <!-- Route controller. -->
+  <flatiron-director route="{{route}}" autoHash></flatiron-director>
 
-  <core-scaffold fit id="scaffold">
-  
-    <core-header-panel navigation mode="seamed" flex>
-      
-      <core-toolbar>MixHide</core-toolbar>
-      
-      <core-menu selectedModel="{{selectedPage}}" on-core-select="{{menuItemSelected}}">
+  <!-- Keyboard nav controller. -->
+  <core-a11y-keys id="keys" target="{{parentElement}}"
+                  keys="up down left right space space+shift"
+                  on-keys-pressed="{{keyHandler}}"></core-a11y-keys>
+
+  <!-- Dynamic content controller -->
+  <core-ajax id="ajax" url="{{selectedPage.page.url}}" handleAs="document"
+             on-core-response="{{onResponse}}"></core-ajax>
+
+  <core-scaffold id="scaffold">
+
+    <nav>
+      <core-toolbar>
+        <span>MixHide</span>
+      </core-toolbar>
+      <core-menu id="menu" valueattr="hash"
+                 selected="{{route}}"
+                 selectedModel="{{selectedPage}}"
+                 on-core-select="{{menuItemSelected}}" on-click="{{ajaxLoad}}">
         <template repeat="{{page, i in pages}}">
-          <core-item icon="label-outline" label="{{page.name}}" active?="{{route == page.hash}}" class="{{ {'core-selected' : route == page.hash} | tokenList }}">
-            <a href="#{{page.hash}}"></a>
-          </core-item>
+          <paper-item hash="{{page.hash}}" noink>
+            <core-icon icon="label{{route != page.hash ? '-outline' : ''}}"></core-icon>
+            <a href="{{page.url}}">{{page.name}}</a>
+          </paper-item>
         </template>
       </core-menu>
-    </core-header-panel>
+    </nav>
 
     <core-toolbar tool flex>
-      <div flex>{{selectedPage.page.title}}</div>
-      <paper-icon-button icon="refresh"></paper-icon-button>
-      <paper-icon-button icon="add"></paper-icon-button>
+      <div flex>{{selectedPage.page.name}}</div>
+      <core-icon-button icon="refresh"></core-icon-button>
+      <core-icon-button icon="add"></core-icon-button>
     </core-toolbar>
 
     <div layout horizontal center-center fit>
       <core-animated-pages id="pages" selected="{{route}}" valueattr="hash" transitions="slide-from-right">
         <div hash='create'>
-        {{page.name}}
           <create-mix></create-mix>
         </div> 
-        <div hash='add'>
-          {{page.name}}
+        <div hash='add' fit>
           <find-song></find-song>
         </div>
         <div hash='view'>
-          {{page.name}}
           <list-song></list-song>
         </div>
       </core-animated-pages>

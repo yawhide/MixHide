@@ -3,31 +3,89 @@
 <link rel="import" href="../bower_components/core-ajax/core-ajax.html">
 <link rel='import' href='../bower_components/paper-button/paper-button.html'>
 <link rel='import' href='../bower_components/core-list/core-list.html'>
+<link rel='import' href='../bower_components/core-selector/core-selector.html'>
+<link rel='import' href='../bower_components/paper-tabs/paper-tabs.html'>
+<link rel='import' href='../bower_components/core-pages/core-pages.html'>
 
 <polymer-element name="find-song">
-  <template>
+  <template  >
+    <style>
+     
+
+
+    </style>
     <link rel='stylesheet' href='../styles/find-song.css'>
-    <h4>Find a Song</h4>
-    <paper-input type='text' label='Enter a Song Name' floatingLabel placeholder='song name' value='{{songName}}' on-keypress="{{keypressHandler}}"></paper-input>
-    <paper-button raised role='button' class='hover' on-click='{{searchSong}}'>Find</paper-button>
-    <core-list data='{{soundCloudSongs}}' height="80" flex style='overflow-y: auto;'>
+    <div>
+      <h4>Find a Song</h4>
+      <paper-input type='text' label='Enter a Song Name' floatingLabel placeholder='song name' value='{{songName}}' on-keypress="{{keypressHandler}}"></paper-input>
+      <paper-button raised role='button' class='hover' on-click='{{searchSong}}'>Find</paper-button>
+    </div>
+    <paper-tabs selected="{{selected}}" selectedindex="0" class="transparent-teal">
+      <paper-tab>SoundCloud</paper-tab>
+      <paper-tab>Youtube</paper-tab>
+      <paper-tab>Spotify</paper-tab>
+    </paper-tabs>
+
+    <core-pages selected="{{selected}}" selectedindex="0" notap>
+      <div>
+        <paper-shadow z='2'>
+    <core-list data='{{soundCloudSongs}}' selectionEnabled="{{selectionEnabled}}"
+    selection="{{selection}}">
       <template>
-        <div divider class="divider">{{model.title}}</div>
-        <div class="item">{{model.username}}</div>
+        <div class="item {{ {selected: selected} | tokenList }}">
+          <div class="message" style="background-image: url({{model.artwork_url}});">
+            <span class="songTitle">{{model.title}}</span>
+            <div>{{model.duration}}</div>
+            <div>{{model.genre}}</div>
+            <a target='_blank' href='{{model.permalink_url}}'>View on SoundCloud</a>
+          </div>
+        </div>
       </template>
     </core-list>
-    <core-list data='{{youtubeSongs}}'>
+    </paper-shadow>
+      </div>
+      <div>
+         <paper-shadow z='2'>
+    <core-list data='{{youtubeSongs}}' selectionEnabled="{{selectionEnabled}}"
+    selection="{{selection}}">
+      <template>
+        <div class="item {{ {selected: selected} | tokenList }}">
+          <div class="message" style="background-image: url({{model.snippet.thumbnails.default.url}});">
+            <span class="songTitle">{{model.snippet.title}}</span>
+            <div style='display: none;'>{{model.snippet.description}}</div>
+            <a target='_blank' href='https://youtube.com/watch?v={{model.id.videoId}}'>View on Youtube</a>
+          </div>
+        </div>
+      </template>
     </core-list>
-    <core-list data='{{spotifySongs}}'>
+    </paper-shadow>
+      </div>
+      <div>
+         <paper-shadow z='2'>
+    <core-list data='{{spotifySongs}}' selectionEnabled="{{selectionEnabled}}"
+    selection="{{selection}}">
+      <template>
+        <div class="item {{ {selected: selected} | tokenList }}">
+          <div class="message" style="background-image: url({{model.album_art.url }});">
+            <span class="songTitle">{{model.name}}</span>
+            <div>{{model.duration_ms}}</div>
+            <a target='_blank' href='{{model.external_urls.spotify}}'>View on Spotify</a>
+          </div>
+        </div>
+      </template>
     </core-list>
+    </paper-shadow>
+      </div>
+    </core-pages>
+
+    
+   
+   
 
   </template>
   <script>
-    (function () {
       Polymer('find-song', {
-        soundCloudSongs: [{title:'hi', username:'bue'}],
-        domReady: function (){
-        },
+        selected: 0,
         keypressHandler: function(event, detail, sender) { 
           if(event.which === 13){
             this.searchSong();
@@ -40,23 +98,23 @@
             console.info('soundcloud');
             console.log(tracks);
             that.SoundCloudResp = JSON.stringify(tracks);
-            //that.soundCloudSongs = [];
-            for (var i = tracks.length - 1; i >= 0; i--) {
-              var ob = {
-                artwork_url: tracks[i].artwork_url,
-                duration: tracks[i].duration,
-                id: tracks[i].id,
-                genre: tracks[i].genre,
-                permalink_url: tracks[i].permalink_url,
-                sharing: tracks[i].sharing,
-                stream_url: tracks[i].streamable? tracks[i].stream_url : null,
-                title: tracks[i].title,
-                uri: tracks[i].uri,
-                waveform_url: tracks[i].waveform_url,
-                username: tracks[i].user.username
-              };
-              that.soundCloudSongs.push(ob);
-            };
+            that.soundCloudSongs = tracks;
+            // for (var i = tracks.length - 1; i >= 0; i--) {
+            //   var ob = {
+            //     artwork_url: tracks[i].artwork_url,
+            //     duration: tracks[i].duration,
+            //     id: tracks[i].id,
+            //     genre: tracks[i].genre,
+            //     permalink_url: tracks[i].permalink_url,
+            //     sharing: tracks[i].sharing,
+            //     stream_url: tracks[i].streamable? tracks[i].stream_url : null,
+            //     title: tracks[i].title,
+            //     uri: tracks[i].uri,
+            //     waveform_url: tracks[i].waveform_url,
+            //     username: tracks[i].user.username
+            //   };
+            //   that.soundCloudSongs.push(ob);
+            // };
             console.log(that.soundCloudSongs);
           })
 
@@ -70,6 +128,7 @@
             console.log(tracks);
             var str = JSON.stringify(tracks.result);
             that.YouTubeResp = str;
+            that.youtubeSongs = tracks.items
           })
           //Spotify
           spotifyApi.searchTracks(this.songName
@@ -80,11 +139,14 @@
               console.info('spotify');
               console.log(tracks);
               that.SpotifyResp = JSON.stringify(tracks);
+              that.spotifySongs = tracks.tracks.items;
+              that.spotifySongs.map(function (i){
+                i.album_art = i.album?i.album.images.length > 0?i.album.images[0] : '' : ''
+              })
             }
           })
           this.songName = '';
         }
       })
-    })();
   </script>
 </polymer-element>
