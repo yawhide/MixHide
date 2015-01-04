@@ -6,7 +6,7 @@
     
   });
 
-var DEFAULT_ROUTE = 'one';
+var DEFAULT_ROUTE = 'create';
 
 var template = document.querySelector('#t');
 var ajax, pages, scaffold;

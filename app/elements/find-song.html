@@ -6,20 +6,23 @@
 <link rel='import' href='../bower_components/core-selector/core-selector.html'>
 <link rel='import' href='../bower_components/paper-tabs/paper-tabs.html'>
 <link rel='import' href='../bower_components/core-pages/core-pages.html'>
+<link rel='import' href='../bower_components/paper-spinner/paper-spinner.html'>
 
 <polymer-element name="find-song">
   <template  >
+    <link rel='stylesheet' href='../styles/find-song.css'>
     <style>
-     
-
 
     </style>
-    <link rel='stylesheet' href='../styles/find-song.css'>
+    
     <div>
       <h4>Find a Song</h4>
       <paper-input type='text' label='Enter a Song Name' floatingLabel placeholder='song name' value='{{songName}}' on-keypress="{{keypressHandler}}"></paper-input>
       <paper-button raised role='button' class='hover' on-click='{{searchSong}}'>Find</paper-button>
     </div>
+    <paper-spinner active='{{searchingForSongs}}'></paper-spinner>
+
+    <template if='{{songsFound}}'>
     <paper-tabs selected="{{selected}}" selectedindex="0" class="transparent-teal">
       <paper-tab>SoundCloud</paper-tab>
       <paper-tab>Youtube</paper-tab>
@@ -77,10 +80,7 @@
     </paper-shadow>
       </div>
     </core-pages>
-
-    
-   
-   
+    </template>
 
   </template>
   <script>
@@ -93,59 +93,87 @@
         },
         searchSong: function (){
           var that = this;
-          // SoundCloud
-          SC.get('/tracks', { q: this.songName}, function (tracks){
-            console.info('soundcloud');
-            console.log(tracks);
-            that.SoundCloudResp = JSON.stringify(tracks);
-            that.soundCloudSongs = tracks;
-            // for (var i = tracks.length - 1; i >= 0; i--) {
-            //   var ob = {
-            //     artwork_url: tracks[i].artwork_url,
-            //     duration: tracks[i].duration,
-            //     id: tracks[i].id,
-            //     genre: tracks[i].genre,
-            //     permalink_url: tracks[i].permalink_url,
-            //     sharing: tracks[i].sharing,
-            //     stream_url: tracks[i].streamable? tracks[i].stream_url : null,
-            //     title: tracks[i].title,
-            //     uri: tracks[i].uri,
-            //     waveform_url: tracks[i].waveform_url,
-            //     username: tracks[i].user.username
-            //   };
-            //   that.soundCloudSongs.push(ob);
-            // };
-            console.log(that.soundCloudSongs);
-          })
+          this.searchingForSongs = true;
 
-          //Youtube
-          var request = gapi.client.youtube.search.list({
-            q: this.songName,
-            part: 'snippet'
-          })
-          request.execute(function (tracks){
-            console.info('youtube')
-            console.log(tracks);
-            var str = JSON.stringify(tracks.result);
-            that.YouTubeResp = str;
-            that.youtubeSongs = tracks.items
-          })
-          //Spotify
-          spotifyApi.searchTracks(this.songName
-            , function (err, tracks){
-            if(err)
+          Promise.all([this.soundCloudPromise(), this.youtubePromise(), this.spotifyPromise()])
+            .done(function (results){
+              that.songsFound = true;
+              that.songName = '';
+              that.searchingForSongs = false;
+            }, function (err){
               console.error(err);
-            else{
-              console.info('spotify');
+              console.error('promise failed');
+              that.searchingForSongs = false;
+              that.songName = '';
+            })
+        },
+        soundCloudPromise: function (){
+          var that = this;
+          var soundCloud = new Promise(function (fulfill, reject){
+            SC.get('/tracks', { q: this.songName}, function (tracks){
+              console.info('soundcloud');
               console.log(tracks);
-              that.SpotifyResp = JSON.stringify(tracks);
-              that.spotifySongs = tracks.tracks.items;
-              that.spotifySongs.map(function (i){
-                i.album_art = i.album?i.album.images.length > 0?i.album.images[0] : '' : ''
-              })
-            }
+              if(tracks.length === 0)
+                reject('')
+              else{
+                that.SoundCloudResp = JSON.stringify(tracks);
+                that.soundCloudSongs = tracks;
+                fulfill();
+              }
+            })
           })
-          this.songName = '';
+          return soundCloud;
+        },
+        youtubePromise: function (){
+          var that = this;
+          var youtube = new Promise(function (fulfill, reject){
+            //Youtube
+            var request = gapi.client.youtube.search.list({
+              q: this.songName,
+              part: 'snippet'
+            })
+            request.execute(function (tracks){
+              console.info('youtube')
+              console.log(tracks);
+              if(tracks.items.length === 0)
+                reject('')
+              else{
+                var str = JSON.stringify(tracks.result);
+                that.YouTubeResp = str;
+                that.youtubeSongs = tracks.items
+                fulfill();
+              }
+            })
+          })
+          return youtube;
+        },
+        spotifyPromise: function (){
+          var that = this;
+          var spotify = new Promise(function (fulfill, reject){
+            //Spotify
+            spotifyApi.searchTracks(this.songName
+              , function (err, tracks){
+              if(err){
+                console.error(err);
+                reject(err);
+              }
+              else{
+                console.info('spotify');
+                console.log(tracks);
+                if(tracks.tracks.items.length === 0)
+                  reject();
+                else{
+                  that.SpotifyResp = JSON.stringify(tracks);
+                  that.spotifySongs = tracks.tracks.items;
+                  that.spotifySongs.map(function (i){
+                    i.album_art = i.album?i.album.images.length > 0?i.album.images[0] : '' : ''
+                  })
+                  fulfill();
+                }
+              }
+          })
+          })
+          return spotify;
         }
       })
   </script>
