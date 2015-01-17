@@ -7,6 +7,9 @@
 <link rel='import' href='../bower_components/paper-tabs/paper-tabs.html'>
 <link rel='import' href='../bower_components/core-pages/core-pages.html'>
 <link rel='import' href='../bower_components/paper-spinner/paper-spinner.html'>
+<link rel='import' href='../bower_components/core-icon-button/core-icon-button.html'>
+<link rel='import' href='../bower_components/core-icons/av-icons.html'>
+
 
 <polymer-element name="find-song">
   <template  >
@@ -19,8 +22,9 @@
       <h4>Find a Song</h4>
       <paper-input type='text' label='Enter a Song Name' floatingLabel placeholder='song name' value='{{songName}}' on-keypress="{{keypressHandler}}"></paper-input>
       <paper-button raised role='button' class='hover' on-click='{{searchSong}}'>Find</paper-button>
+      <paper-spinner active='{{searchingForSongs}}'></paper-spinner>
     </div>
-    <paper-spinner active='{{searchingForSongs}}'></paper-spinner>
+    
 
     <template if='{{songsFound}}'>
     <paper-tabs selected="{{selected}}" selectedindex="0" class="transparent-teal">
@@ -33,11 +37,12 @@
       <div>
         <paper-shadow z='2'>
     <core-list data='{{soundCloudSongs}}' selectionEnabled="{{selectionEnabled}}"
-    selection="{{selection}}">
+    selection="{{selection}}" on-core-activate="{{soundCloudHandler}}">
       <template>
         <div class="item {{ {selected: selected} | tokenList }}">
           <div class="message" style="background-image: url({{model.artwork_url}});">
             <span class="songTitle">{{model.title}}</span>
+            <core-icon-button icon="av:play-arrow" on-click="{{playSong}}" disabled?='{{!model.streamable}}' streamid='{{model.id}}'></core-icon-button>
             <div>{{model.duration}}</div>
             <div>{{model.genre}}</div>
             <a target='_blank' href='{{model.permalink_url}}'>View on SoundCloud</a>
@@ -50,7 +55,7 @@
       <div>
          <paper-shadow z='2'>
     <core-list data='{{youtubeSongs}}' selectionEnabled="{{selectionEnabled}}"
-    selection="{{selection}}">
+    selection="{{selection}}" on-core-activate="{{soundCloudHandler}}">
       <template>
         <div class="item {{ {selected: selected} | tokenList }}">
           <div class="message" style="background-image: url({{model.snippet.thumbnails.default.url}});">
@@ -66,7 +71,7 @@
       <div>
          <paper-shadow z='2'>
     <core-list data='{{spotifySongs}}' selectionEnabled="{{selectionEnabled}}"
-    selection="{{selection}}">
+    selection="{{selection}}" on-core-activate="{{soundCloudHandler}}">
       <template>
         <div class="item {{ {selected: selected} | tokenList }}">
           <div class="message" style="background-image: url({{model.album_art.url }});">
@@ -85,6 +90,7 @@
   </template>
   <script>
       Polymer('find-song', {
+        currentSongPlaying: {},
         selected: 0,
         keypressHandler: function(event, detail, sender) { 
           if(event.which === 13){
@@ -110,14 +116,14 @@
         soundCloudPromise: function (){
           var that = this;
           var soundCloud = new Promise(function (fulfill, reject){
-            SC.get('/tracks', { q: this.songName}, function (tracks){
+            SC.get('/tracks', { q: that.songName}, function (tracks){
               console.info('soundcloud');
               console.log(tracks);
               if(tracks.length === 0)
                 reject('')
               else{
                 that.SoundCloudResp = JSON.stringify(tracks);
-                that.soundCloudSongs = tracks;
+                that.soundCloudSongs = tracks.slice(0, 10);
                 fulfill();
               }
             })
@@ -129,8 +135,9 @@
           var youtube = new Promise(function (fulfill, reject){
             //Youtube
             var request = gapi.client.youtube.search.list({
-              q: this.songName,
-              part: 'snippet'
+              q: that.songName,
+              part: 'snippet',
+              maxResults: 10
             })
             request.execute(function (tracks){
               console.info('youtube')
@@ -140,7 +147,7 @@
               else{
                 var str = JSON.stringify(tracks.result);
                 that.YouTubeResp = str;
-                that.youtubeSongs = tracks.items
+                that.youtubeSongs = tracks.items;
                 fulfill();
               }
             })
@@ -151,7 +158,7 @@
           var that = this;
           var spotify = new Promise(function (fulfill, reject){
             //Spotify
-            spotifyApi.searchTracks(this.songName
+            spotifyApi.searchTracks(that.songName
               , function (err, tracks){
               if(err){
                 console.error(err);
@@ -164,7 +171,7 @@
                   reject();
                 else{
                   that.SpotifyResp = JSON.stringify(tracks);
-                  that.spotifySongs = tracks.tracks.items;
+                  that.spotifySongs = tracks.tracks.items.slice(0, 10);
                   that.spotifySongs.map(function (i){
                     i.album_art = i.album?i.album.images.length > 0?i.album.images[0] : '' : ''
                   })
@@ -174,6 +181,26 @@
           })
           })
           return spotify;
+        },
+        soundCloudHandler: function (event, detail, sender){
+
+        },
+        playSong: function (event, detail, sender){
+          var id = sender.getAttribute('streamid');
+          var that = this;
+          if(this.currentSongPlaying.songPlaying === id){
+            if(this.currentSongPlaying.paused)
+              this.currentSongPlaying.resume()
+            else
+              this.currentSongPlaying.pause()
+            return;
+          } else if (Object.keys(this.currentSongPlaying).length !== 0)
+            this.currentSongPlaying.stop();
+          SC.stream('/tracks/'+id, function (sound){
+            that.currentSongPlaying = sound;
+            that.currentSongPlaying.songPlaying = id;
+            sound.play();
+          })
         }
       })
   </script>
