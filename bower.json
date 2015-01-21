@@ -9,7 +9,8 @@
     "flatiron-director": "Polymer/flatiron-director#~0.5.0",
     "paper-shadow": "Polymer/paper-shadow#~0.5.2",
     "font-awesome": "~4.2.0",
-    "font-awesome-polymer-icons": "~4.2.0-b2"
+    "font-awesome-polymer-icons": "~4.2.0-b2",
+    "google-youtube": "GoogleWebComponents/google-youtube#~1.0.1"
   },
   "devDependencies": {
     "web-component-tester": "Polymer/web-component-tester#^2.0.0"

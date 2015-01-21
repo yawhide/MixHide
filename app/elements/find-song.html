@@ -9,14 +9,13 @@
 <link rel='import' href='../bower_components/paper-spinner/paper-spinner.html'>
 <link rel='import' href='../bower_components/core-icon-button/core-icon-button.html'>
 <link rel='import' href='../bower_components/core-icons/av-icons.html'>
-
+<link rel='import' href='../bower_components/core-collapse/core-collapse.html'>
+<link rel='import' href='../bower_components/google-youtube/google-youtube.html'>
 
 <polymer-element name="find-song">
   <template  >
     <link rel='stylesheet' href='../styles/find-song.css'>
-    <style>
-
-    </style>
+    <style></style>
     
     <div>
       <h4>Find a Song</h4>
@@ -24,46 +23,37 @@
       <paper-button raised role='button' class='hover' on-click='{{searchSong}}'>Find</paper-button>
       <paper-spinner active='{{searchingForSongs}}'></paper-spinner>
     </div>
-    
 
-    <template if='{{songsFound}}'>
+    <div if='{{songsFound}}'>
     <paper-tabs selected="{{selected}}" selectedindex="0" class="transparent-teal">
       <paper-tab>SoundCloud</paper-tab>
       <paper-tab>Youtube</paper-tab>
       <paper-tab>Spotify</paper-tab>
     </paper-tabs>
 
-    <core-pages selected="{{selected}}" selectedindex="0" notap>
+    <core-pages id='corePages' selected="{{selected}}" selectedindex="0" notap>
       <div>
         <paper-shadow z='2'>
-    <core-list data='{{soundCloudSongs}}' selectionEnabled="{{selectionEnabled}}"
-    selection="{{selection}}" on-core-activate="{{soundCloudHandler}}">
-      <template>
-        <div class="item {{ {selected: selected} | tokenList }}">
-          <div class="message" style="background-image: url({{model.artwork_url}});">
-            <span class="songTitle">{{model.title}}</span>
-            <core-icon-button icon="av:play-arrow" on-click="{{playSong}}" disabled?='{{!model.streamable}}' streamid='{{model.id}}'></core-icon-button>
-            <div>{{model.duration}}</div>
-            <div>{{model.genre}}</div>
-            <a target='_blank' href='{{model.permalink_url}}'>View on SoundCloud</a>
-          </div>
-        </div>
-      </template>
-    </core-list>
-    </paper-shadow>
+           <soundcloud-list songArray="{{soundCloudSongs}}"></soundcloud-list>
+        </paper-shadow>
       </div>
+
       <div>
          <paper-shadow z='2'>
-    <core-list data='{{youtubeSongs}}' selectionEnabled="{{selectionEnabled}}"
-    selection="{{selection}}" on-core-activate="{{soundCloudHandler}}">
+    <core-list data='{{youtubeSongs}}'>
       <template>
-        <div class="item {{ {selected: selected} | tokenList }}">
+        {{selected}}, {{index}}
+        <core-collapse id='coreCollapse' opened="{{selected}}" fixedSize>
+        <div class="item">
           <div class="message" style="background-image: url({{model.snippet.thumbnails.default.url}});">
+            <core-icon-button icon="av:play-arrow" on-click="{{playYTSong}}" streamid='{{model.id.videoId}}'></core-icon-button>
             <span class="songTitle">{{model.snippet.title}}</span>
             <div style='display: none;'>{{model.snippet.description}}</div>
             <a target='_blank' href='https://youtube.com/watch?v={{model.id.videoId}}'>View on Youtube</a>
           </div>
         </div>
+        <div id='youtubeWidget'></div>
+        </core-collapse>
       </template>
     </core-list>
     </paper-shadow>
@@ -85,123 +75,140 @@
     </paper-shadow>
       </div>
     </core-pages>
-    </template>
+    </div>
 
   </template>
   <script>
-      Polymer('find-song', {
-        currentSongPlaying: {},
-        selected: 0,
-        keypressHandler: function(event, detail, sender) { 
-          if(event.which === 13){
-            this.searchSong();
-          }
-        },
-        searchSong: function (){
-          var that = this;
-          this.searchingForSongs = true;
+    Polymer('find-song', {
+      currentSongPlaying: {},
+      //googleYouTube: document.querySelector('google-youtube'),
+      selected: 0,
+      keypressHandler: function(event, detail, sender) { 
+        if(event.which === 13){
+          this.searchSong();
+        }
+        window.hey = this;
+      },
+      searchSong: function (){
+        var that = this;
+        this.searchingForSongs = true;
 
-          Promise.all([this.soundCloudPromise(), this.youtubePromise(), this.spotifyPromise()])
-            .done(function (results){
-              that.songsFound = true;
-              that.songName = '';
-              that.searchingForSongs = false;
-            }, function (err){
+        Promise.all([this.soundCloudPromise(), this.youtubePromise(), this.spotifyPromise()])
+          .done(function (results){
+            that.songsFound = true;
+            that.songName = '';
+            that.searchingForSongs = false;
+          }, function (err){
+            console.error(err);
+            console.error('promise failed');
+            that.searchingForSongs = false;
+            that.songName = '';
+          })
+      },
+      soundCloudPromise: function (){
+        var that = this;
+        var soundCloud = new Promise(function (fulfill, reject){
+          SC.get('/tracks', { q: that.songName}, function (tracks){
+            console.info('soundcloud');
+            console.log(tracks);
+            if(tracks.length === 0)
+              reject('')
+            else{
+              that.SoundCloudResp = JSON.stringify(tracks);
+              that.soundCloudSongs = tracks.slice(0, 10);
+              fulfill();
+            }
+          })
+        })
+        return soundCloud;
+      },
+      youtubePromise: function (){
+        var that = this;
+        var youtube = new Promise(function (fulfill, reject){
+          //Youtube
+          var request = gapi.client.youtube.search.list({
+            q: that.songName,
+            part: 'snippet',
+            maxResults: 10
+          })
+          request.execute(function (tracks){
+            console.info('youtube')
+            console.log(tracks);
+            if(tracks.items.length === 0)
+              reject('')
+            else{
+              var str = JSON.stringify(tracks.result);
+              that.YouTubeResp = str;
+              that.youtubeSongs = tracks.items;
+              fulfill();
+            }
+          })
+        })
+        return youtube;
+      },
+      spotifyPromise: function (){
+        var that = this;
+        var spotify = new Promise(function (fulfill, reject){
+          //Spotify
+          spotifyApi.searchTracks(that.songName
+            , function (err, tracks){
+            if(err){
               console.error(err);
-              console.error('promise failed');
-              that.searchingForSongs = false;
-              that.songName = '';
-            })
-        },
-        soundCloudPromise: function (){
-          var that = this;
-          var soundCloud = new Promise(function (fulfill, reject){
-            SC.get('/tracks', { q: that.songName}, function (tracks){
-              console.info('soundcloud');
+              reject(err);
+            }
+            else{
+              console.info('spotify');
               console.log(tracks);
-              if(tracks.length === 0)
-                reject('')
+              if(tracks.tracks.items.length === 0)
+                reject();
               else{
-                that.SoundCloudResp = JSON.stringify(tracks);
-                that.soundCloudSongs = tracks.slice(0, 10);
+                that.SpotifyResp = JSON.stringify(tracks);
+                that.spotifySongs = tracks.tracks.items.slice(0, 10);
+                that.spotifySongs.map(function (i){
+                  i.album_art = i.album?i.album.images.length > 0?i.album.images[0] : '' : ''
+                })
                 fulfill();
               }
-            })
-          })
-          return soundCloud;
-        },
-        youtubePromise: function (){
-          var that = this;
-          var youtube = new Promise(function (fulfill, reject){
-            //Youtube
-            var request = gapi.client.youtube.search.list({
-              q: that.songName,
-              part: 'snippet',
-              maxResults: 10
-            })
-            request.execute(function (tracks){
-              console.info('youtube')
-              console.log(tracks);
-              if(tracks.items.length === 0)
-                reject('')
-              else{
-                var str = JSON.stringify(tracks.result);
-                that.YouTubeResp = str;
-                that.youtubeSongs = tracks.items;
-                fulfill();
-              }
-            })
-          })
-          return youtube;
-        },
-        spotifyPromise: function (){
-          var that = this;
-          var spotify = new Promise(function (fulfill, reject){
-            //Spotify
-            spotifyApi.searchTracks(that.songName
-              , function (err, tracks){
-              if(err){
-                console.error(err);
-                reject(err);
-              }
-              else{
-                console.info('spotify');
-                console.log(tracks);
-                if(tracks.tracks.items.length === 0)
-                  reject();
-                else{
-                  that.SpotifyResp = JSON.stringify(tracks);
-                  that.spotifySongs = tracks.tracks.items.slice(0, 10);
-                  that.spotifySongs.map(function (i){
-                    i.album_art = i.album?i.album.images.length > 0?i.album.images[0] : '' : ''
-                  })
-                  fulfill();
-                }
-              }
-          })
-          })
-          return spotify;
-        },
-        soundCloudHandler: function (event, detail, sender){
+            }
+        })
+        })
+        return spotify;
+      },
+      soundCloudHandler: function (event, detail, sender){
 
-        },
-        playSong: function (event, detail, sender){
-          var id = sender.getAttribute('streamid');
-          var that = this;
-          if(this.currentSongPlaying.songPlaying === id){
-            if(this.currentSongPlaying.paused)
-              this.currentSongPlaying.resume()
-            else
-              this.currentSongPlaying.pause()
-            return;
-          } else if (Object.keys(this.currentSongPlaying).length !== 0)
-            this.currentSongPlaying.stop();
-          SC.stream('/tracks/'+id, function (sound){
-            that.currentSongPlaying = sound;
-            that.currentSongPlaying.songPlaying = id;
-            sound.play();
+      },
+      playSCSong: function (event, detail, sender){
+        var id = sender.getAttribute('streamid');
+        var that = this;
+        if(this.currentSongPlaying.songPlaying === id){
+          if(this.currentSongPlaying.paused)
+            this.currentSongPlaying.resume()
+          else
+            this.currentSongPlaying.pause()
+          return;
+        } else if (Object.keys(this.currentSongPlaying).length !== 0)
+          this.currentSongPlaying.stop();
+        SC.stream('/tracks/'+id, function (sound){
+          that.currentSongPlaying = sound;
+          that.currentSongPlaying.songPlaying = id;
+          sound.play();
+        })
+      },
+      playYTSong: function (event, detail, sender){
+        var id = sender.getAttribute('streamid');
+
+
+
+        if(ytPlayer){
+
+        } else {
+          ytPlayer = new YT.Player('youtubePlayer', {
+            height: '240',
+            width: '320',
+            videoId: id
           })
         }
-      })
+      }
+    });
   </script>
 </polymer-element>

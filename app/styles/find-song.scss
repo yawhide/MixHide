@@ -30,16 +30,11 @@ core-list{
 
 .item {
   box-sizing: border-box;
-  height: 80px;
-  border-bottom: 1px solid #ddd;
+  border-top: 1px solid #ddd;
   padding: 4px;
   cursor: default;
   background-color: white;
   overflow: hidden;
-}
-
-.selected {
-  background: silver;
 }
 
 .message {
@@ -93,3 +88,13 @@ h4{
 core-icon-button{
   float: right;
 }
+
+core-collapse {
+  display: block !important;
+  min-height: 80px;
+  height: 150px;
+}
+
+// google-youtube{
+//   display: none;
+// }
