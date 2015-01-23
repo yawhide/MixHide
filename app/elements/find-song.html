@@ -59,20 +59,9 @@
     </paper-shadow>
       </div>
       <div>
-         <paper-shadow z='2'>
-    <core-list data='{{spotifySongs}}' selectionEnabled="{{selectionEnabled}}"
-    selection="{{selection}}" on-core-activate="{{soundCloudHandler}}">
-      <template>
-        <div class="item {{ {selected: selected} | tokenList }}">
-          <div class="message" style="background-image: url({{model.album_art.url }});">
-            <span class="songTitle">{{model.name}}</span>
-            <div>{{model.duration_ms}}</div>
-            <a target='_blank' href='{{model.external_urls.spotify}}'>View on Spotify</a>
-          </div>
-        </div>
-      </template>
-    </core-list>
-    </paper-shadow>
+        <paper-shadow z='2'>
+          <spotify-list songArray="{{spotifySongs}}"></spotify-list>
+        </paper-shadow>
       </div>
     </core-pages>
     </div>
